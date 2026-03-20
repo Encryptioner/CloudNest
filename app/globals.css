@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Dark theme (default) ─────────────────────────────────── */
+:root {
+  --cn-bg: #141c2f;
+  --cn-s1: #1d2842;
+  --cn-s2: #243250;
+  --cn-border: #2e3f5c;
+  --cn-hover: #1a2438;
+  --cn-text: #e8eeff;
+  --cn-text2: #7d94b4;
+  --cn-text3: #4a6080;
+  --cn-sidebar: #0f1826;
+}
+
+/* ── Light theme ─────────────────────────────────────────── */
+:root.light {
+  --cn-bg: #f8f9ff;
+  --cn-s1: #ffffff;
+  --cn-s2: #eef1ff;
+  --cn-border: #dde3f0;
+  --cn-hover: #f2f5ff;
+  --cn-text: #0d1630;
+  --cn-text2: #4a5f82;
+  --cn-text3: #8a9aba;
+  --cn-sidebar: #ffffff;
+}
+
+body {
+  background-color: var(--cn-bg);
+  color: var(--cn-text);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cn-border) transparent;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: var(--cn-border);
+  border-radius: 3px;
+}
+
+/* ── Landing page animations ─────────────────────────────── */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fdba74 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease infinite;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(249, 115, 22, 0.07) 1px, transparent 1px),
+    linear-gradient(to right, rgba(249, 115, 22, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+:root.light .grid-bg {
+  background-image:
+    linear-gradient(rgba(249, 115, 22, 0.09) 1px, transparent 1px),
+    linear-gradient(to right, rgba(249, 115, 22, 0.09) 1px, transparent 1px);
+}

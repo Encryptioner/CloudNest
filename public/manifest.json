@@ -1,0 +1,16 @@
+{
+  "name": "CloudNest",
+  "short_name": "CloudNest",
+  "description": "Unified Google Drive Dashboard",
+  "start_url": "/CloudNest/",
+  "display": "standalone",
+  "background_color": "#141c2f",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/CloudNest/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}
