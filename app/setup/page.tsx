@@ -111,6 +111,14 @@ export default function SetupPage() {
               >
                 Let&apos;s Get Started
               </button>
+              <div className="mt-4">
+                <button
+                  onClick={() => setCurrentStep(5)}
+                  className="text-xs text-cn-text3 hover:text-orange-400 transition"
+                >
+                  Already have a Client ID? <span className="underline">Skip to setup</span>
+                </button>
+              </div>
             </div>
           )}
 

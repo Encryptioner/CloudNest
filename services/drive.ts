@@ -496,14 +496,29 @@ export async function getOrCreateCloudNestFolder(
   return (create.result as { id: string }).id;
 }
 
-// ── Quota for all accounts ─────────────────────────────────
+// ── Quota for a single account (uses fetch, no global token) ──
+async function getStorageQuotaDirect(
+  token: string,
+): Promise<{ used: number; limit: number; free: number }> {
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/about?fields=storageQuota",
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) throw new Error(`Drive API ${res.status}`);
+  const data = (await res.json()) as { storageQuota: { usage?: string; limit?: string } };
+  const used = parseInt(data.storageQuota.usage ?? "0", 10);
+  const limit = parseInt(data.storageQuota.limit ?? String(15 * 1024 ** 3), 10);
+  return { used, limit, free: Math.max(0, limit - used) };
+}
+
+// ── Quota for all accounts (parallel-safe, bypasses global gapi token) ──
 export async function getAllQuotas(
   accounts: ConnectedAccount[],
 ): Promise<AccountQuota[]> {
   const results = await Promise.allSettled(
     accounts.map(async (account) => {
       try {
-        const quota = await getStorageQuota(account.accessToken);
+        const quota = await getStorageQuotaDirect(account.accessToken);
         return {
           email: account.email,
           used: quota.used,

@@ -95,39 +95,57 @@ export async function silentReAuth(
   await loadGIS();
 
   return new Promise((resolve) => {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: DRIVE_SCOPE,
-      hint: email,
-      prompt: "",
-      callback: async (response) => {
-        if (response.error) {
-          resolve(null);
-          return;
-        }
+    let resolved = false;
+    const safeResolve = (value: TokenResult | null) => {
+      if (!resolved) {
+        resolved = true;
+        resolve(value);
+      }
+    };
 
-        try {
-          const userInfo = await fetch(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            { headers: { Authorization: `Bearer ${response.access_token}` } },
-          );
-          const data = (await userInfo.json()) as { email: string };
+    try {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: DRIVE_SCOPE,
+        hint: email,
+        prompt: "",
+        callback: async (response) => {
+          if (response.error) {
+            safeResolve(null);
+            return;
+          }
 
-          resolve({
-            accessToken: response.access_token,
-            expiresIn: response.expires_in,
-            email: data.email,
-          });
-        } catch {
-          resolve(null);
-        }
-      },
-      error_callback: () => {
-        resolve(null);
-      },
-    });
+          try {
+            const userInfo = await fetch(
+              "https://www.googleapis.com/oauth2/v2/userinfo",
+              { headers: { Authorization: `Bearer ${response.access_token}` } },
+            );
+            const data = (await userInfo.json()) as { email?: string };
 
-    client.requestAccessToken({ prompt: "" });
+            if (!data.email) {
+              safeResolve(null);
+              return;
+            }
+
+            safeResolve({
+              accessToken: response.access_token,
+              expiresIn: response.expires_in,
+              email: data.email,
+            });
+          } catch {
+            safeResolve(null);
+          }
+        },
+        error_callback: () => {
+          safeResolve(null);
+        },
+      });
+
+      client.requestAccessToken({ prompt: "" });
+    } catch {
+      // Popup blocked by browser — expected for background refresh
+      safeResolve(null);
+    }
   });
 }
 

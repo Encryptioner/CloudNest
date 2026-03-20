@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Global interactive cursor ──────────────────────────── */
+@layer base {
+  button,
+  [role="button"],
+  a[href],
+  select,
+  summary,
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    cursor: pointer;
+  }
+}
+
 /* ── Dark theme (default) ─────────────────────────────────── */
 :root {
   --cn-bg: #141c2f;

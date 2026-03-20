@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const features = [
@@ -121,6 +123,11 @@ function DriveIcon({ color, delay = "0s" }: { color: string; delay?: string }) {
 
 export default function LandingPage() {
   const { theme, toggle } = useTheme();
+  const { isAuthenticated, isLoading, signOut } = useAuth();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const ctaHref = isAuthenticated ? "/dashboard" : "/setup";
+  const ctaLabel = isAuthenticated ? "Go to Dashboard" : "Get Started";
 
   return (
     <div className="min-h-screen bg-cn-bg text-cn-text">
@@ -167,10 +174,10 @@ export default function LandingPage() {
               GitHub
             </a>
             <Link
-              href="/setup"
+              href={ctaHref}
               className="rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white shadow shadow-orange-500/20 transition hover:bg-orange-400"
             >
-              Get Started
+              {isLoading ? "..." : ctaLabel}
             </Link>
           </div>
         </div>
@@ -202,13 +209,13 @@ export default function LandingPage() {
 
           <div className="animate-fade-up-d3 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/setup"
+              href={ctaHref}
               className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:bg-orange-400"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
-              Open Dashboard
+              {isAuthenticated ? "Go to Dashboard" : "Open Dashboard"}
             </Link>
             <a
               href="https://github.com/Encryptioner/CloudNest"
@@ -445,15 +452,53 @@ export default function LandingPage() {
                 View on GitHub
               </a>
               <Link
-                href="/setup"
+                href={ctaHref}
                 className="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow shadow-orange-500/25 transition hover:bg-orange-400"
               >
-                Start Using CloudNest
+                {isAuthenticated ? "Go to Dashboard" : "Start Using CloudNest"}
               </Link>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ── Reset Section (only when authenticated) ─── */}
+      {isAuthenticated && (
+        <section className="border-t border-cn-border py-8">
+          <div className="mx-auto max-w-6xl px-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-cn-text">Reset CloudNest</p>
+              <p className="text-xs text-cn-text3 mt-0.5">
+                Clear all connected accounts and settings. Your Google Drive files are not affected.
+              </p>
+            </div>
+            {showResetConfirm ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-400">Are you sure?</span>
+                <button
+                  onClick={() => { signOut(); setShowResetConfirm(false); }}
+                  className="rounded-lg bg-red-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-400"
+                >
+                  Yes, Reset Everything
+                </button>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="rounded-lg border border-cn-border px-4 py-2 text-xs text-cn-text2 transition hover:bg-cn-hover"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="rounded-lg border border-red-500/40 px-4 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+              >
+                Reset All Data
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="border-t border-cn-border bg-cn-s1 py-8">

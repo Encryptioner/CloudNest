@@ -12,11 +12,13 @@ export default function Navbar({ onMenuOpen }: { onMenuOpen?: () => void }) {
   const { signOut } = useAuth();
   const [profile, setProfileState] = useState(() => storage.getProfile());
   const [showModal, setShowModal] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
 
   function handleSignOut() {
     signOut();
+    setShowSignOutConfirm(false);
     router.push("/");
   }
 
@@ -82,7 +84,7 @@ export default function Navbar({ onMenuOpen }: { onMenuOpen?: () => void }) {
           </button>
 
           <button
-            onClick={handleSignOut}
+            onClick={() => setShowSignOutConfirm(true)}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-cn-text3 transition hover:bg-cn-hover hover:text-red-400"
             title="Sign out"
           >
@@ -92,6 +94,37 @@ export default function Navbar({ onMenuOpen }: { onMenuOpen?: () => void }) {
           </button>
         </div>
       </header>
+
+      {showSignOutConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowSignOutConfirm(false)}
+        >
+          <div
+            className="relative w-full max-w-xs rounded-2xl border border-cn-border bg-cn-s1 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-2 text-sm font-semibold text-cn-text">Sign out?</h2>
+            <p className="mb-5 text-xs text-cn-text3">
+              This will clear all connected accounts and settings from this browser. Your Google Drive files are not affected.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSignOutConfirm(false)}
+                className="flex-1 rounded-lg border border-cn-border py-2 text-sm text-cn-text2 transition hover:bg-cn-hover"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-medium text-white transition hover:bg-red-400"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div

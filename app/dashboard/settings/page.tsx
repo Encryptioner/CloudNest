@@ -8,13 +8,14 @@ import type { UserProfile } from "@/types";
 import { formatBytes } from "@/utils/format";
 
 export default function SettingsPage() {
-  const { clientId, accounts, setClientId, connectAccount, disconnectAccount } = useAuth();
+  const { clientId, accounts, staleAccounts, setClientId, connectAccount, disconnectAccount, reAuthAccount } = useAuth();
   const { quotas, totalUsed, totalLimit, refreshStorage } = useStorage();
   const [connecting, setConnecting] = useState(false);
   const [editingClientId, setEditingClientId] = useState(false);
   const [clientIdInput, setClientIdInput] = useState(clientId ?? "");
   const [profile, setProfile] = useState<UserProfile>(() => storage.getProfile());
   const [profileSaved, setProfileSaved] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
 
   const connectedCount = accounts.length;
 
@@ -203,11 +204,12 @@ export default function SettingsPage() {
             const limit = hasLiveQuota ? quota.limit : account.storageQuota.limit;
             const free = hasLiveQuota ? quota.free : account.storageQuota.free;
             const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+            const isStale = staleAccounts.has(account.email);
 
             return (
               <div
                 key={account.email}
-                className="rounded-xl border border-cn-border bg-cn-s1 p-5 transition"
+                className={`rounded-xl border bg-cn-s1 p-5 transition ${isStale ? "border-amber-500/40" : "border-cn-border"}`}
               >
                 <div className="mb-4 flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -215,8 +217,17 @@ export default function SettingsPage() {
                       {account.email}
                     </p>
                     <div className="mt-1 flex items-center gap-1.5">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-xs text-emerald-400">Connected</span>
+                      {isStale ? (
+                        <>
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                          <span className="text-xs text-amber-400">Needs Re-auth</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          <span className="text-xs text-emerald-400">Connected</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -238,12 +249,39 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleDisconnect(account.email)}
-                  className="w-full rounded-lg border border-cn-border py-2 text-xs text-cn-text2 transition hover:border-red-500/40 hover:text-red-400"
-                >
-                  Disconnect
-                </button>
+                <div className="flex gap-2">
+                  {isStale && (
+                    <button
+                      onClick={() => reAuthAccount(account.email)}
+                      className="flex-1 rounded-lg bg-amber-500 py-2 text-xs font-medium text-white transition hover:bg-amber-400"
+                    >
+                      Re-authenticate
+                    </button>
+                  )}
+                  {confirmDisconnect === account.email ? (
+                    <div className="flex flex-1 gap-1.5">
+                      <button
+                        onClick={() => { handleDisconnect(account.email); setConfirmDisconnect(null); }}
+                        className="flex-1 rounded-lg bg-red-500 py-2 text-xs font-medium text-white transition hover:bg-red-400"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setConfirmDisconnect(null)}
+                        className="rounded-lg border border-cn-border px-3 py-2 text-xs text-cn-text2 transition hover:bg-cn-hover"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDisconnect(account.email)}
+                      className={`rounded-lg border border-cn-border py-2 text-xs text-cn-text2 transition hover:border-red-500/40 hover:text-red-400 ${isStale ? "px-3" : "w-full"}`}
+                    >
+                      Disconnect
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
