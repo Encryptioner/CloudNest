@@ -1,53 +1,64 @@
-# ── Credentials & secrets ─────────────────────────────────────────────────────
-config/credentials_*.json
-backend/.env
-backend/.env.*
-backend/drivepool.db
-backend/*.db
-
-# ── Python ────────────────────────────────────────────────────────────────────
-__pycache__/
-**/__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-.venv/
-venv/
-env/
-.tox/
-.mypy_cache/
-.ruff_cache/
-.pytest_cache/
-htmlcov/
-.coverage
-coverage.xml
-*.cover
-
-# ── Node / Next.js ────────────────────────────────────────────────────────────
+# Dependencies
 node_modules/
-frontend/.next/
-frontend/out/
-frontend/dist/
-frontend/.turbo/
+
+# Next.js
+.next/
+out/
 *.tsbuildinfo
 next-env.d.ts
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
 
-# ── OS ────────────────────────────────────────────────────────────────────────
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# ── IDE ───────────────────────────────────────────────────────────────────────
-.vscode/
+# Vscode IDE
+.vscode/*
+!.vscode/*.example.json
 .idea/
 *.swp
-*.swo
+
+# Claude IDE
+.claude/*
+!.claude/*.example*
+**/.claude/*
+!**/.claude/*.example*
+
+# Cursor IDE
+.cursor/*
+.cursorignore
+!.cursor/*.example*
+
+# Environment
+.env
+.env.*
+
+# Debug logs
+npm-debug.log*
+pnpm-debug.log*
+
+# Bitbucket MCP
+bitbucket.log
+
+# Playwright MCP
+.playwright-mcp/*
+
+# agtx (multi-task agent orchestrator)
+.agtx/*
+!.agtx/*.example.*
+.worktrees/*
+
+# Development Credentials
+*.credentials.*
+!.credentials.example*
+
+# Test Screenshots & CSV
+ai/**/tests/screenshots/*
+ai/**/tests/csv/*
+ai/tmp/*
+
+# ignore source map for typescript/css file
+*.map
+
+auto_commit_changes.sh
+auto_commit_prompt.md
+auto_commit_plan.json

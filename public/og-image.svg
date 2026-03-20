@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+
+  <!-- Subtle gradient accent at top -->
+  <defs>
+    <linearGradient id="topGlow" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#topGlow)"/>
+
+  <!-- Cloud icon -->
+  <g transform="translate(600, 240)" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-40,10 A30,30 0 0,1 -10,-20 A25,25 0 0,1 30,-15 A20,20 0 0,1 45,10 Z" fill="#f97316" fill-opacity="0.15"/>
+    <path d="M-40,10 A30,30 0 0,1 -10,-20 A25,25 0 0,1 30,-15 A20,20 0 0,1 45,10"/>
+    <line x1="-40" y1="10" x2="45" y2="10"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="600" y="340" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="72" font-weight="700" fill="#f97316" letter-spacing="-1">
+    CloudNest
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="395" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="28" font-weight="400" fill="#ffffff" opacity="0.85">
+    Unified Google Drive Dashboard
+  </text>
+
+  <!-- Thin accent line -->
+  <rect x="530" y="415" width="140" height="2" rx="1" fill="#f97316" opacity="0.5"/>
+
+  <!-- Footer tagline -->
+  <text x="600" y="465" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="400" fill="#ffffff" opacity="0.4">
+    Free and open source. Runs entirely in your browser.
+  </text>
+</svg>

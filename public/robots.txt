@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://encryptioner.github.io/CloudNest/sitemap.xml

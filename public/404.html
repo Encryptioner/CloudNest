@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CloudNest</title>
+  <script>
+    // GitHub Pages SPA redirect
+    // Saves the path so the app can restore it after loading
+    var path = window.location.pathname;
+    var base = '/CloudNest';
+    if (path.startsWith(base)) {
+      var route = path.slice(base.length) || '/';
+      var search = window.location.search;
+      var hash = window.location.hash;
+      sessionStorage.setItem('cn_redirect', route + search + hash);
+      window.location.replace(base + '/');
+    }
+  </script>
+</head>
+<body>
+</body>
+</html>
