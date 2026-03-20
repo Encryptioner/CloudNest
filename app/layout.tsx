@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://encryptioner.github.io/CloudNest",
   },
-  icons: { icon: "/favicon.svg" },
-  manifest: "/manifest.json",
+  icons: { icon: "/CloudNest/favicon.svg" },
+  manifest: "/CloudNest/manifest.json",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

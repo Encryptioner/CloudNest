@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useStorage } from "@/hooks/useStorage";
 import { formatBytes } from "@/utils/format";
 
@@ -46,7 +47,16 @@ type SidebarProps = {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { connectAccount } = useAuth();
   const { quotas } = useStorage();
+  const [addingAccount, setAddingAccount] = useState(false);
+
+  async function handleAddAccount() {
+    if (addingAccount) return;
+    setAddingAccount(true);
+    try { await connectAccount(); } catch { /* user cancelled */ }
+    setAddingAccount(false);
+  }
   const [collapsed, setCollapsed] = useState(() =>
     typeof window !== "undefined"
       ? localStorage.getItem("sidebar-collapsed") === "true"
@@ -83,14 +93,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Logo + collapse toggle */}
         <div className={`flex items-center border-b border-cn-border px-3 py-[14px] ${collapsed ? "lg:justify-center" : "justify-between"}`}>
-          <div className={`flex items-center gap-2.5 ${collapsed ? "lg:justify-center" : ""}`}>
+          <Link href="/" className={`flex items-center gap-2.5 transition hover:opacity-80 ${collapsed ? "lg:justify-center" : ""}`} title="Go to homepage">
             <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10">
               <svg className="h-3.5 w-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
               </svg>
             </div>
             <span className={`text-sm font-semibold text-cn-text ${collapsed ? "lg:hidden" : ""}`}>CloudNest</span>
-          </div>
+          </Link>
           {/* Close button on mobile */}
           <button
             onClick={onClose}
@@ -156,6 +166,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span>{formatBytes(totalUsed)} used</span>
               <span>{formatBytes(Math.max(0, totalLimit - totalUsed))} free</span>
             </div>
+            <button
+              onClick={handleAddAccount}
+              disabled={addingAccount}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-cn-border py-1.5 text-[11px] text-cn-text3 transition hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-50"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              {addingAccount ? "Connecting..." : "Add Account"}
+            </button>
           </div>
         )}
 
