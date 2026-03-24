@@ -40,6 +40,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-L4QKJV3Q1H"></script>
+        <script dangerouslySetInnerHTML={{__html: `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-L4QKJV3Q1H');
+`}} />
+      </head>
       <body className="min-h-screen antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
