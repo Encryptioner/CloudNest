@@ -527,12 +527,13 @@ export async function getAllQuotas(
           isConnected: true,
         };
       } catch {
+        // Fall back to stored quota — account is still connected, just can't reach API
         return {
           email: account.email,
-          used: 0,
-          limit: 0,
-          free: 0,
-          isConnected: false,
+          used: account.storageQuota.used,
+          limit: account.storageQuota.limit,
+          free: account.storageQuota.free,
+          isConnected: true,
         };
       }
     }),

@@ -9,7 +9,7 @@ import { formatBytes } from "@/utils/format";
 
 export default function SettingsPage() {
   const { clientId, accounts, staleAccounts, setClientId, connectAccount, disconnectAccount, reAuthAccount } = useAuth();
-  const { quotas, totalUsed, totalLimit, refreshStorage } = useStorage();
+  const { quotas, totalUsed, totalLimit, totalFree, refreshStorage } = useStorage();
   const [connecting, setConnecting] = useState(false);
   const [editingClientId, setEditingClientId] = useState(false);
   const [clientIdInput, setClientIdInput] = useState(clientId ?? "");
@@ -173,7 +173,7 @@ export default function SettingsPage() {
           </div>
           <div className="text-right">
             <p className="text-sm text-cn-text2">{formatBytes(totalUsed)} used</p>
-            <p className="text-sm text-cn-text3">{formatBytes(Math.max(0, totalLimit - totalUsed))} free</p>
+            <p className="text-sm text-cn-text3">{formatBytes(totalFree)} free</p>
           </div>
         </div>
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-cn-hover">

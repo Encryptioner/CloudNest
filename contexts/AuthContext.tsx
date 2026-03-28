@@ -13,6 +13,8 @@ import type { ConnectedAccount } from "@/types";
 import * as storage from "@/services/storage";
 import * as auth from "@/services/auth";
 import * as drive from "@/services/drive";
+import { useStorageStore } from "@/stores/storageStore";
+import { useFileStore } from "@/stores/fileStore";
 
 interface AuthContextValue {
   clientId: string | null;
@@ -25,7 +27,6 @@ interface AuthContextValue {
   disconnectAccount: (email: string) => void;
   refreshAccountToken: (email: string) => Promise<string | null>;
   reAuthAccount: (email: string) => Promise<void>;
-  refreshAllQuotas: () => Promise<void>;
   signOut: () => void;
 }
 
@@ -42,7 +43,6 @@ const AuthContext = createContext<AuthContextValue>({
   disconnectAccount: () => {},
   refreshAccountToken: async () => null,
   reAuthAccount: async () => {},
-  refreshAllQuotas: async () => {},
   signOut: () => {},
 });
 
@@ -73,8 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await auth.requestAccessToken(clientId);
     const quota = await drive.getStorageQuota(result.accessToken).catch(() => ({
       used: 0,
-      limit: 15 * 1024 ** 3,
-      free: 15 * 1024 ** 3,
+      limit: 0,
+      free: 0,
     }));
 
     const account: ConnectedAccount = {
@@ -134,29 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     storage.clearClientId();
     storage.setAccounts([]);
+    useStorageStore.getState().clearStorage();
+    useFileStore.getState().clearFiles();
     setClientIdState(null);
     setAccountsState([]);
   }, []);
-
-  const refreshAllQuotas = useCallback(async () => {
-    const quotas = await drive.getAllQuotas(accounts);
-    const updated = accounts.map((account) => {
-      const quota = quotas.find((q) => q.email === account.email);
-      if (quota) {
-        return {
-          ...account,
-          storageQuota: {
-            used: quota.used,
-            limit: quota.limit,
-            free: quota.free,
-          },
-        };
-      }
-      return account;
-    });
-    storage.setAccounts(updated);
-    setAccountsState(updated);
-  }, [accounts]);
 
   // Check token expiry periodically
   useEffect(() => {
@@ -200,7 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       disconnectAccount,
       refreshAccountToken,
       reAuthAccount,
-      refreshAllQuotas,
       signOut,
     }),
     [
@@ -214,7 +195,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       disconnectAccount,
       refreshAccountToken,
       reAuthAccount,
-      refreshAllQuotas,
       signOut,
     ],
   );

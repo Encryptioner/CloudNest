@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStorage } from "@/hooks/useStorage";
+import { useSidebarStore } from "@/stores/sidebarStore";
 import { formatBytes } from "@/utils/format";
 
 const navItems = [
@@ -48,7 +49,7 @@ type SidebarProps = {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { connectAccount } = useAuth();
-  const { quotas } = useStorage();
+  const { quotas, totalUsed, totalLimit, totalFree } = useStorage();
   const [addingAccount, setAddingAccount] = useState(false);
 
   async function handleAddAccount() {
@@ -57,18 +58,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     try { await connectAccount(); } catch { /* user cancelled */ }
     setAddingAccount(false);
   }
-  const [collapsed, setCollapsed] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem("sidebar-collapsed") === "true"
-      : false,
-  );
-
-  useEffect(() => {
-    localStorage.setItem("sidebar-collapsed", String(collapsed));
-  }, [collapsed]);
-
-  const totalUsed = quotas.reduce((s: number, q) => s + q.used, 0);
-  const totalLimit = quotas.reduce((s: number, q) => s + q.limit, 0);
+  const { collapsed, setCollapsed } = useSidebarStore();
   const pct = totalLimit > 0 ? Math.min(100, (totalUsed / totalLimit) * 100) : 0;
   const connectedCount = quotas.filter((q) => q.isConnected).length;
 
@@ -155,16 +145,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Storage */}
         {!collapsed && (
           <div className="mx-3 mb-3 rounded-xl border border-cn-border bg-cn-bg p-4">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-1 flex items-center justify-between">
               <span className="text-xs font-medium text-cn-text">Storage Pool</span>
               <span className="rounded-full border border-cn-border px-2 py-0.5 text-[10px] text-cn-text3">{connectedCount} active</span>
             </div>
+            <p className="mb-2 text-lg font-semibold text-cn-text">{formatBytes(totalLimit)}</p>
             <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-cn-border">
               <div className="h-full rounded-full bg-orange-500 transition-all duration-500" style={{ width: `${pct}%` }} />
             </div>
             <div className="flex justify-between text-xs text-cn-text3">
               <span>{formatBytes(totalUsed)} used</span>
-              <span>{formatBytes(Math.max(0, totalLimit - totalUsed))} free</span>
+              <span>{formatBytes(totalFree)} free</span>
             </div>
             <button
               onClick={handleAddAccount}

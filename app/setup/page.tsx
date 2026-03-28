@@ -348,7 +348,7 @@ export default function SetupPage() {
               <p className="mt-3 text-cn-text2">
                 CloudNest is ready. Your {accounts.length} connected account{accounts.length !== 1 ? "s" : ""} give{accounts.length === 1 ? "s" : ""} you {" "}
                 <strong className="text-cn-text">
-                  {accounts.length * 15} GB
+                  {(accounts.reduce((sum, a) => sum + a.storageQuota.limit, 0) / (1024 ** 3)).toFixed(0)} GB
                 </strong>{" "}
                 of unified storage.
               </p>
