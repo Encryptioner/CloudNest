@@ -15,6 +15,7 @@ import * as auth from "@/services/auth";
 import * as drive from "@/services/drive";
 import { useStorageStore } from "@/stores/storageStore";
 import { useFileStore } from "@/stores/fileStore";
+import { trackEvent } from "@/services/analytics";
 
 interface AuthContextValue {
   clientId: string | null;
@@ -24,7 +25,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   hasSetup: boolean;
   setClientId: (id: string) => void;
-  connectAccount: () => Promise<void>;
+  connectAccount: (source?: "setup" | "accounts" | "settings" | "sidebar") => Promise<void>;
   disconnectAccount: (email: string) => void;
   refreshAccountToken: (email: string) => Promise<string | null>;
   reAuthAccount: (email: string) => Promise<void>;
@@ -41,7 +42,7 @@ const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   hasSetup: false,
   setClientId: () => {},
-  connectAccount: async () => {},
+  connectAccount: async (_source?) => {},
   disconnectAccount: () => {},
   refreshAccountToken: async () => null,
   reAuthAccount: async () => {},
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClientIdState(id);
   }, []);
 
-  const connectAccount = useCallback(async () => {
+  const connectAccount = useCallback(async (source: "setup" | "accounts" | "settings" | "sidebar" = "setup") => {
     if (!clientId) throw new Error("No Client ID configured");
 
     const result = await auth.requestAccessToken(clientId);
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     storage.addAccount(account);
     setAccountsState(storage.getAccounts());
+    trackEvent({ name: "account_connected", params: { source } });
   }, [clientId]);
 
   const disconnectAccount = useCallback((email: string) => {
@@ -134,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(() => {
+    trackEvent({ name: "signed_out" });
     storage.clearClientId();
     storage.setAccounts([]);
     useStorageStore.getState().clearStorage();

@@ -5,6 +5,7 @@ import { useFiles } from "@/hooks/useFiles";
 import { useStorage } from "@/hooks/useStorage";
 import { useDrive } from "@/hooks/useDrive";
 import { useUpload } from "@/contexts/UploadContext";
+import { trackEvent, simplifyMimeType, sanitizeError } from "@/services/analytics";
 import type { FileMetadata } from "@/types";
 import { formatBytes } from "@/utils/format";
 
@@ -835,12 +836,14 @@ export default function FilesPage() {
   const scrollStack = useRef<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [filterAccount, setFilterAccount] = useState<string>("all");
   const [filterType, setFilterType] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
   const [draggedFile, setDraggedFile] = useState<FileMetadata | null>(null);
   const [shareModal, setShareModal] = useState<{ file: FileMetadata; link: string | null; loading: boolean; revoking: boolean } | null>(null);
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
+  const handlePreview = useCallback((file: FileMetadata) => { setPreviewFile(file); trackEvent({ name: "file_previewed", params: { file_type: simplifyMimeType(file.mimeType) } }); }, []);
 
   useEffect(() => {
     const unsub = addCompleteListener(() => {
@@ -957,8 +960,10 @@ export default function FilesPage() {
       await driveOps.renameFile(file, newName);
       await refreshFiles();
       updateToast(tid, "success", "Renamed");
-    } catch {
+      trackEvent({ name: "file_renamed" });
+    } catch (err: unknown) {
       updateToast(tid, "error", "Rename failed");
+      trackEvent({ name: "error_occurred", params: { category: "file_operation", action: "rename", error: sanitizeError(err instanceof Error ? err.message : "Rename failed") } });
     }
   }
 
@@ -969,8 +974,10 @@ export default function FilesPage() {
       await refreshFiles();
       refreshStorage();
       updateToast(tid, "success", "Moved to trash");
-    } catch {
+      trackEvent({ name: "file_deleted", params: { file_type: simplifyMimeType(file.mimeType), location: "files" } });
+    } catch (err: unknown) {
       updateToast(tid, "error", "Delete failed");
+      trackEvent({ name: "error_occurred", params: { category: "file_operation", action: "delete", error: sanitizeError(err instanceof Error ? err.message : "Delete failed") } });
     }
   }
 
@@ -983,6 +990,7 @@ export default function FilesPage() {
           await driveOps.moveFile(file, "root", file.parentDriveFileId ?? undefined);
           await refreshFiles();
           updateToast(tid, "success", "Moved to root");
+          trackEvent({ name: "file_moved" });
         } catch {
           updateToast(tid, "error", "Move failed");
         }
@@ -994,6 +1002,7 @@ export default function FilesPage() {
       await driveOps.moveFile(file, targetFolderDriveId, file.parentDriveFileId ?? undefined);
       await refreshFiles();
       updateToast(tid, "success", "File moved");
+      trackEvent({ name: "file_moved" });
     } catch {
       updateToast(tid, "error", "Move failed");
     }
@@ -1004,6 +1013,7 @@ export default function FilesPage() {
     try {
       const link = await driveOps.shareFile(file);
       setShareModal((prev) => prev ? { ...prev, link, loading: false } : null);
+      trackEvent({ name: "file_shared", params: { file_type: simplifyMimeType(file.mimeType) } });
     } catch {
       toast("Failed to generate share link", "error");
       setShareModal(null);
@@ -1016,6 +1026,7 @@ export default function FilesPage() {
     try {
       await driveOps.unshareFile(shareModal.file);
       toast("File is now private", "success");
+      trackEvent({ name: "file_unshared" });
       setShareModal(null);
     } catch {
       toast("Failed to revoke sharing", "error");
@@ -1027,6 +1038,7 @@ export default function FilesPage() {
     try {
       const url = await driveOps.getDownloadUrl(file);
       window.open(url, "_blank");
+      trackEvent({ name: "file_downloaded", params: { file_type: simplifyMimeType(file.mimeType) } });
     } catch {
       toast("Download failed", "error");
     }
@@ -1105,7 +1117,7 @@ export default function FilesPage() {
                     onFocus={(e) => e.target.select()}
                   />
                   <button
-                    onClick={() => { if (shareModal.link) { navigator.clipboard.writeText(shareModal.link); toast("Link copied!", "success"); } }}
+                    onClick={() => { if (shareModal.link) { navigator.clipboard.writeText(shareModal.link); toast("Link copied!", "success"); trackEvent({ name: "share_link_copied" }); } }}
                     className="flex-shrink-0 rounded-lg border border-cn-border bg-cn-s1 px-2.5 py-1.5 text-[11px] font-medium text-cn-text2 transition hover:border-orange-500/30 hover:text-orange-400"
                   >
                     Copy
@@ -1160,12 +1172,12 @@ export default function FilesPage() {
           </button>
 
           <div className="flex rounded-lg border border-cn-border bg-cn-s1 p-0.5">
-            <button onClick={() => setView("list")} className={`rounded-md p-1.5 transition ${view === "list" ? "bg-cn-hover text-cn-text" : "text-cn-text3 hover:text-cn-text2"}`} title="List view">
+            <button onClick={() => { setView("list"); trackEvent({ name: "view_changed", params: { view: "list", page: "files" } }); }} className={`rounded-md p-1.5 transition ${view === "list" ? "bg-cn-hover text-cn-text" : "text-cn-text3 hover:text-cn-text2"}`} title="List view">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0Z" />
               </svg>
             </button>
-            <button onClick={() => setView("grid")} className={`rounded-md p-1.5 transition ${view === "grid" ? "bg-cn-hover text-cn-text" : "text-cn-text3 hover:text-cn-text2"}`} title="Grid view">
+            <button onClick={() => { setView("grid"); trackEvent({ name: "view_changed", params: { view: "grid", page: "files" } }); }} className={`rounded-md p-1.5 transition ${view === "grid" ? "bg-cn-hover text-cn-text" : "text-cn-text3 hover:text-cn-text2"}`} title="Grid view">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25ZM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25Z" />
               </svg>
@@ -1191,7 +1203,7 @@ export default function FilesPage() {
           </svg>
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); clearTimeout(searchTimerRef.current); if (e.target.value.trim()) searchTimerRef.current = setTimeout(() => trackEvent({ name: "search_used", params: { page: "files" } }), 1000); }}
             placeholder="Search files..."
             className="w-full rounded-lg border border-cn-border bg-cn-s1 py-2 pl-8 pr-3 text-xs text-cn-text placeholder-cn-text3 outline-none focus:border-orange-500/50"
           />
@@ -1228,7 +1240,7 @@ export default function FilesPage() {
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortKey)}
+          onChange={(e) => { setSortBy(e.target.value as SortKey); trackEvent({ name: "sort_changed", params: { sort_by: e.target.value, page: "files" } }); }}
           className="rounded-lg border border-cn-border bg-cn-s1 px-2.5 py-2 text-xs text-cn-text2 outline-none focus:border-orange-500/50"
         >
           <option value="date-desc">Newest first</option>
@@ -1277,7 +1289,7 @@ export default function FilesPage() {
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filteredFiles.map((file) => (
-            <GridCard key={file.driveFileId} file={file} onOpen={openFolder} onRename={handleRename} onDelete={handleDelete} onMove={handleMove} onUploadInto={upload} inFolder={currentFolder.id !== null} onMoveToRoot={() => handleMove(file, "root")} onDragStartFile={handleDragStartFile} onShare={handleShare} onPreview={setPreviewFile} onDownload={handleDownload} />
+            <GridCard key={file.driveFileId} file={file} onOpen={openFolder} onRename={handleRename} onDelete={handleDelete} onMove={handleMove} onUploadInto={upload} inFolder={currentFolder.id !== null} onMoveToRoot={() => handleMove(file, "root")} onDragStartFile={handleDragStartFile} onShare={handleShare} onPreview={handlePreview} onDownload={handleDownload} />
           ))}
         </div>
       ) : (
@@ -1294,7 +1306,7 @@ export default function FilesPage() {
             </thead>
             <tbody>
               {filteredFiles.map((file) => (
-                <ListRow key={file.driveFileId} file={file} onOpen={openFolder} onRename={handleRename} onDelete={handleDelete} onMove={handleMove} onUploadInto={upload} inFolder={currentFolder.id !== null} onMoveToRoot={() => handleMove(file, "root")} onDragStartFile={handleDragStartFile} onShare={handleShare} onPreview={setPreviewFile} onDownload={handleDownload} />
+                <ListRow key={file.driveFileId} file={file} onOpen={openFolder} onRename={handleRename} onDelete={handleDelete} onMove={handleMove} onUploadInto={upload} inFolder={currentFolder.id !== null} onMoveToRoot={() => handleMove(file, "root")} onDragStartFile={handleDragStartFile} onShare={handleShare} onPreview={handlePreview} onDownload={handleDownload} />
               ))}
             </tbody>
           </table>

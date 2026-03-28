@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFiles } from "@/hooks/useFiles";
 import { useStorage } from "@/hooks/useStorage";
 import { useStats } from "@/hooks/useStats";
+import { trackEvent } from "@/services/analytics";
 import {
   AreaChart,
   Area,
@@ -68,6 +70,8 @@ export default function StatsPage() {
   const { quotas, isLoading: storageLoading } = useStorage();
   const stats = useStats(files, quotas);
   const hasData = files.length > 0 || quotas.length > 0;
+
+  useEffect(() => { trackEvent({ name: "stats_viewed" }); }, []);
 
   if (filesLoading || storageLoading || !hasData) {
     return (

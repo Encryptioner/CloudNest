@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStorage } from "@/hooks/useStorage";
 import { useSidebarStore } from "@/stores/sidebarStore";
+import { trackEvent } from "@/services/analytics";
 import { formatBytes } from "@/utils/format";
 
 const navItems = [
@@ -55,7 +56,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   async function handleAddAccount() {
     if (addingAccount) return;
     setAddingAccount(true);
-    try { await connectAccount(); } catch { /* user cancelled */ }
+    try { await connectAccount("sidebar"); } catch { /* user cancelled */ }
     setAddingAccount(false);
   }
   const { collapsed, setCollapsed } = useSidebarStore();
@@ -104,7 +105,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Collapse toggle on desktop */}
           {!collapsed && (
             <button
-              onClick={() => setCollapsed(true)}
+              onClick={() => { setCollapsed(true); trackEvent({ name: "sidebar_toggled", params: { collapsed: true } }); }}
               className="hidden h-6 w-6 items-center justify-center rounded-md text-cn-text3 transition hover:bg-cn-hover hover:text-cn-text lg:flex"
               title="Collapse sidebar"
             >
@@ -174,7 +175,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {collapsed && (
           <div className="mb-3 hidden justify-center lg:flex">
             <button
-              onClick={() => setCollapsed(false)}
+              onClick={() => { setCollapsed(false); trackEvent({ name: "sidebar_toggled", params: { collapsed: false } }); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-cn-text3 transition hover:bg-cn-hover hover:text-cn-text"
               title="Expand sidebar"
             >

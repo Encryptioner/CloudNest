@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrive } from "@/hooks/useDrive";
 import * as drive from "@/services/drive";
+import { trackEvent, simplifyMimeType } from "@/services/analytics";
 import type { FileMetadata } from "@/types";
 import { formatBytes } from "@/utils/format";
 
@@ -125,6 +126,7 @@ export default function SharedPage() {
     try {
       const url = await driveOps.getDownloadUrl(file);
       window.open(url, "_blank");
+      trackEvent({ name: "file_downloaded", params: { file_type: simplifyMimeType(file.mimeType) } });
     } catch {
       // Silent fail
     }
@@ -188,7 +190,7 @@ export default function SharedPage() {
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortKey)}
+          onChange={(e) => { setSortBy(e.target.value as SortKey); trackEvent({ name: "sort_changed", params: { sort_by: e.target.value, page: "shared" } }); }}
           className="rounded-lg border border-cn-border bg-cn-s1 py-2 pl-3 pr-7 text-xs text-cn-text2 outline-none focus:border-orange-500/50"
         >
           <option value="date">Date</option>
@@ -198,7 +200,7 @@ export default function SharedPage() {
 
         <div className="flex rounded-lg border border-cn-border bg-cn-s1 p-0.5">
           <button
-            onClick={() => setView("grid")}
+            onClick={() => { setView("grid"); trackEvent({ name: "view_changed", params: { view: "grid", page: "shared" } }); }}
             className={`flex h-7 w-7 items-center justify-center rounded-md transition ${view === "grid" ? "bg-cn-s2 text-cn-text" : "text-cn-text3 hover:text-cn-text"}`}
             title="Grid view"
           >
@@ -207,7 +209,7 @@ export default function SharedPage() {
             </svg>
           </button>
           <button
-            onClick={() => setView("list")}
+            onClick={() => { setView("list"); trackEvent({ name: "view_changed", params: { view: "list", page: "shared" } }); }}
             className={`flex h-7 w-7 items-center justify-center rounded-md transition ${view === "list" ? "bg-cn-s2 text-cn-text" : "text-cn-text3 hover:text-cn-text"}`}
             title="List view"
           >

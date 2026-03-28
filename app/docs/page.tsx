@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "@/contexts/ThemeContext";
+import { trackEvent } from "@/services/analytics";
 
 const sections = [
   { id: "getting-started", num: "01", title: "Getting Started", color: "text-orange-400", accent: "border-orange-500/40" },
@@ -60,6 +62,8 @@ function SectionHeader({ num, color, accent, title }: { num: string; color: stri
 
 export default function DocsPage() {
   const { theme, toggle } = useTheme();
+
+  useEffect(() => { trackEvent({ name: "docs_viewed" }); }, []);
 
   return (
     <div className="min-h-screen bg-cn-bg text-cn-text">

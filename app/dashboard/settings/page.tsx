@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStorage } from "@/hooks/useStorage";
 import * as storage from "@/services/storage";
+import { trackEvent } from "@/services/analytics";
 import type { UserProfile } from "@/types";
 import { formatBytes } from "@/utils/format";
 
@@ -41,7 +42,7 @@ export default function SettingsPage() {
     if (connecting) return;
     setConnecting(true);
     try {
-      await connectAccount();
+      await connectAccount("settings");
       await refreshStorage();
     } catch {
       // Connect failed or user cancelled
@@ -50,6 +51,7 @@ export default function SettingsPage() {
   }
 
   function handleDisconnect(email: string) {
+    trackEvent({ name: "account_disconnected", params: { source: "settings" } });
     disconnectAccount(email);
   }
 
@@ -252,7 +254,7 @@ export default function SettingsPage() {
                 <div className="flex gap-2">
                   {isStale && (
                     <button
-                      onClick={() => reAuthAccount(account.email)}
+                      onClick={() => { trackEvent({ name: "account_reauth", params: { source: "settings" } }); reAuthAccount(account.email); }}
                       className="flex-1 rounded-lg bg-amber-500 py-2 text-xs font-medium text-white transition hover:bg-amber-400"
                     >
                       Re-authenticate

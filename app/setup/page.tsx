@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackEvent, sanitizeError } from "@/services/analytics";
 import Link from "next/link";
 
 const CLIENT_ID_PATTERN = /^[a-zA-Z0-9-]+\.apps\.googleusercontent\.com$/;
@@ -54,6 +55,7 @@ export default function SetupPage() {
     }
     setClientIdError("");
     setClientId(trimmed);
+    trackEvent({ name: "setup_client_id_saved" });
     setCurrentStep(6);
   }, [inputClientId, setClientId]);
 
@@ -61,14 +63,22 @@ export default function SetupPage() {
     setIsConnecting(true);
     setConnectError("");
     try {
-      await connectAccount();
+      await connectAccount("setup");
+      trackEvent({ name: "setup_account_connected", params: { account_count: accounts.length + 1 } });
       setCurrentStep(7);
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : "Failed to connect account");
+      const msg = err instanceof Error ? err.message : "Failed to connect account";
+      setConnectError(msg);
+      trackEvent({ name: "setup_account_failed", params: { error: sanitizeError(msg) } });
     } finally {
       setIsConnecting(false);
     }
-  }, [connectAccount]);
+  }, [connectAccount, accounts.length]);
+
+  // Track each step view for funnel analysis
+  useEffect(() => {
+    trackEvent({ name: "setup_step_viewed", params: { step: currentStep, step_name: STEPS[currentStep] ?? "Unknown" } });
+  }, [currentStep]);
 
   const stepName: StepName = STEPS[currentStep] ?? "Welcome";
 
@@ -106,14 +116,14 @@ export default function SetupPage() {
                 and provide your own OAuth Client ID. This takes about 5 minutes.
               </p>
               <button
-                onClick={() => setCurrentStep(1)}
+                onClick={() => { trackEvent({ name: "setup_started" }); setCurrentStep(1); }}
                 className="mt-8 rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400"
               >
                 Let&apos;s Get Started
               </button>
               <div className="mt-4">
                 <button
-                  onClick={() => setCurrentStep(5)}
+                  onClick={() => { trackEvent({ name: "setup_skipped_to_client_id" }); setCurrentStep(5); }}
                   className="text-xs text-cn-text3 hover:text-orange-400 transition"
                 >
                   Already have a Client ID? <span className="underline">Skip to setup</span>
@@ -395,6 +405,7 @@ export default function SetupPage() {
               </p>
               <Link
                 href="/dashboard"
+                onClick={() => trackEvent({ name: "setup_completed", params: { account_count: accounts.length, total_storage_gb: Math.round(accounts.reduce((sum, a) => sum + a.storageQuota.limit, 0) / (1024 ** 3)) } })}
                 className="mt-8 inline-block rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400"
               >
                 Open Dashboard

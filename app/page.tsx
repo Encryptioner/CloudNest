@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { trackEvent } from "@/services/analytics";
 
 const features = [
   {
@@ -176,6 +177,7 @@ export default function LandingPage() {
             </a>
             <Link
               href={ctaHref}
+              onClick={() => trackEvent({ name: "cta_clicked", params: { label: ctaLabel, source: "navbar" } })}
               className="rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white shadow shadow-orange-500/20 transition hover:bg-orange-400"
             >
               {isLoading ? "..." : ctaLabel}
@@ -206,6 +208,7 @@ export default function LandingPage() {
             </div>
             <Link
               href="/dashboard"
+              onClick={() => trackEvent({ name: "cta_clicked", params: { label: "Go to Dashboard", source: "welcome_back" } })}
               className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -244,6 +247,7 @@ export default function LandingPage() {
           <div className="animate-fade-up-d3 flex flex-wrap items-center justify-center gap-3">
             <Link
               href={ctaHref}
+              onClick={() => trackEvent({ name: "cta_clicked", params: { label: ctaLabel, source: "hero" } })}
               className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:bg-orange-400"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -487,6 +491,7 @@ export default function LandingPage() {
               </a>
               <Link
                 href={ctaHref}
+                onClick={() => trackEvent({ name: "cta_clicked", params: { label: ctaLabel, source: "bottom_cta" } })}
                 className="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow shadow-orange-500/25 transition hover:bg-orange-400"
               >
                 {ctaLabel}

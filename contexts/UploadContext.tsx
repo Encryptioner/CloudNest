@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import * as drive from "@/services/drive";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackEvent, simplifyMimeType, sanitizeError } from "@/services/analytics";
 
 type Snack = { id: number; name: string; progress: number; status: "uploading" | "done" | "error" };
 type Toast = { id: number; message: string; type: "loading" | "success" | "error" };
@@ -106,13 +107,15 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             sn.id === id ? { ...sn, status: "done", progress: 100 } : sn,
           ),
         );
+        trackEvent({ name: "file_uploaded", params: { file_type: simplifyMimeType(file.type), file_size: file.size } });
         listeners.current.forEach((fn) => fn());
         setTimeout(() => setSnacks((s) => s.filter((sn) => sn.id !== id)), 3000);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         setSnacks((s) =>
           s.map((sn) => (sn.id === id ? { ...sn, status: "error" } : sn)),
         );
+        trackEvent({ name: "file_upload_failed", params: { file_type: simplifyMimeType(file.type), error: sanitizeError(err instanceof Error ? err.message : "Upload failed") } });
         setTimeout(() => setSnacks((s) => s.filter((sn) => sn.id !== id)), 5000);
       });
   }, [accounts]);

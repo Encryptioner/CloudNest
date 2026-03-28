@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUpload } from "@/contexts/UploadContext";
 import { useDrive } from "@/hooks/useDrive";
 import * as drive from "@/services/drive";
+import { trackEvent, simplifyMimeType, sanitizeError } from "@/services/analytics";
 import type { FileMetadata } from "@/types";
 import { formatBytes } from "@/utils/format";
 
@@ -143,8 +144,10 @@ export default function TrashPage() {
         (f) => !(f.driveFileId === file.driveFileId && f.accountEmail === file.accountEmail)
       ));
       updateToast(tid, "success", `"${file.fileName}" restored`);
-    } catch {
+      trackEvent({ name: "file_restored", params: { file_type: simplifyMimeType(file.mimeType) } });
+    } catch (err: unknown) {
       updateToast(tid, "error", "Restore failed");
+      trackEvent({ name: "error_occurred", params: { category: "file_operation", action: "restore", error: sanitizeError(err instanceof Error ? err.message : "Restore failed") } });
     }
     setActing(null);
   }
@@ -159,8 +162,10 @@ export default function TrashPage() {
         (f) => !(f.driveFileId === file.driveFileId && f.accountEmail === file.accountEmail)
       ));
       updateToast(tid, "success", "Deleted permanently");
-    } catch {
+      trackEvent({ name: "file_deleted", params: { file_type: simplifyMimeType(file.mimeType), location: "trash" } });
+    } catch (err: unknown) {
       updateToast(tid, "error", "Delete failed");
+      trackEvent({ name: "error_occurred", params: { category: "file_operation", action: "permanent_delete", error: sanitizeError(err instanceof Error ? err.message : "Delete failed") } });
     }
     setActing(null);
   }
@@ -203,7 +208,7 @@ export default function TrashPage() {
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortKey)}
+          onChange={(e) => { setSortBy(e.target.value as SortKey); trackEvent({ name: "sort_changed", params: { sort_by: e.target.value, page: "trash" } }); }}
           className="rounded-lg border border-cn-border bg-cn-s1 py-2 pl-3 pr-7 text-xs text-cn-text2 outline-none focus:border-orange-500/50"
         >
           <option value="date">Date trashed</option>
@@ -213,7 +218,7 @@ export default function TrashPage() {
 
         <div className="flex rounded-lg border border-cn-border bg-cn-s1 p-0.5">
           <button
-            onClick={() => setView("grid")}
+            onClick={() => { setView("grid"); trackEvent({ name: "view_changed", params: { view: "grid", page: "trash" } }); }}
             className={`flex h-7 w-7 items-center justify-center rounded-md transition ${view === "grid" ? "bg-cn-s2 text-cn-text" : "text-cn-text3 hover:text-cn-text"}`}
             title="Grid view"
           >
@@ -222,7 +227,7 @@ export default function TrashPage() {
             </svg>
           </button>
           <button
-            onClick={() => setView("list")}
+            onClick={() => { setView("list"); trackEvent({ name: "view_changed", params: { view: "list", page: "trash" } }); }}
             className={`flex h-7 w-7 items-center justify-center rounded-md transition ${view === "list" ? "bg-cn-s2 text-cn-text" : "text-cn-text3 hover:text-cn-text"}`}
             title="List view"
           >

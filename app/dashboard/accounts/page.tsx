@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStorage } from "@/hooks/useStorage";
+import { trackEvent } from "@/services/analytics";
 import { formatBytes } from "@/utils/format";
 
 export default function AccountsPage() {
@@ -17,7 +18,7 @@ export default function AccountsPage() {
     if (connecting) return;
     setConnecting(true);
     try {
-      await connectAccount();
+      await connectAccount("accounts");
       await refreshStorage();
     } catch {
       // Connect failed or user cancelled
@@ -26,6 +27,7 @@ export default function AccountsPage() {
   }
 
   function handleDisconnect(email: string) {
+    trackEvent({ name: "account_disconnected", params: { source: "accounts" } });
     disconnectAccount(email);
   }
 
@@ -177,7 +179,7 @@ export default function AccountsPage() {
                   <div className="space-y-2">
                     {staleAccounts.has(account.email) && (
                       <button
-                        onClick={() => reAuthAccount(account.email)}
+                        onClick={() => { trackEvent({ name: "account_reauth", params: { source: "accounts" } }); reAuthAccount(account.email); }}
                         className="w-full rounded-lg border border-amber-500/40 py-2 text-xs font-medium text-amber-400 transition hover:bg-amber-500/10"
                       >
                         Re-authenticate

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import * as storage from "@/services/storage";
+import { trackEvent } from "@/services/analytics";
 
 type Theme = "dark" | "light";
 
@@ -27,6 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const next = t === "dark" ? "light" : "dark";
       storage.setTheme(next);
       document.documentElement.classList.toggle("light", next === "light");
+      trackEvent({ name: "theme_toggled", params: { theme: next } });
       return next;
     });
   }
