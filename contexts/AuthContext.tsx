@@ -22,6 +22,7 @@ interface AuthContextValue {
   staleAccounts: Set<string>;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasSetup: boolean;
   setClientId: (id: string) => void;
   connectAccount: () => Promise<void>;
   disconnectAccount: (email: string) => void;
@@ -38,6 +39,7 @@ const AuthContext = createContext<AuthContextValue>({
   staleAccounts: EMPTY_SET,
   isLoading: true,
   isAuthenticated: false,
+  hasSetup: false,
   setClientId: () => {},
   connectAccount: async () => {},
   disconnectAccount: () => {},
@@ -140,12 +142,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccountsState([]);
   }, []);
 
-  // Check token expiry periodically
+  // Check token expiry immediately on mount and periodically
   useEffect(() => {
     if (!clientId || accounts.length === 0) return;
 
     const checkExpiry = () => {
       for (const account of accounts) {
+        // Skip accounts already marked as stale to avoid re-auth loops
+        if (staleAccounts.has(account.email)) continue;
+
         if (auth.isTokenExpired(account.tokenExpiry)) {
           refreshAccountToken(account.email).then((token) => {
             if (!token) {
@@ -158,16 +163,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    checkExpiry(); // Run immediately — don't wait for the first interval tick
     const interval = setInterval(checkExpiry, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [clientId, accounts, refreshAccountToken]);
+  }, [clientId, accounts, refreshAccountToken, staleAccounts]);
+
+  const hasSetup = useMemo(
+    () => !!clientId && accounts.length > 0,
+    [clientId, accounts],
+  );
 
   const isAuthenticated = useMemo(
     () =>
-      !!clientId &&
-      accounts.length > 0 &&
+      hasSetup &&
       accounts.some((a) => !auth.isTokenExpired(a.tokenExpiry)),
-    [clientId, accounts],
+    [hasSetup, accounts],
   );
 
   const value = useMemo<AuthContextValue>(
@@ -177,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       staleAccounts,
       isLoading,
       isAuthenticated,
+      hasSetup,
       setClientId,
       connectAccount,
       disconnectAccount,
@@ -190,6 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       staleAccounts,
       isLoading,
       isAuthenticated,
+      hasSetup,
       setClientId,
       connectAccount,
       disconnectAccount,

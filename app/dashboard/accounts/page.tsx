@@ -6,9 +6,10 @@ import { useStorage } from "@/hooks/useStorage";
 import { formatBytes } from "@/utils/format";
 
 export default function AccountsPage() {
-  const { accounts, connectAccount, disconnectAccount } = useAuth();
+  const { accounts, staleAccounts, connectAccount, disconnectAccount, reAuthAccount } = useAuth();
   const { quotas, totalUsed, totalLimit, totalFree, refreshStorage } = useStorage();
   const [connecting, setConnecting] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
 
   const connectedCount = accounts.length;
 
@@ -55,6 +56,27 @@ export default function AccountsPage() {
           )}
           {connecting ? "Connecting..." : "Connect another account"}
         </button>
+      </div>
+
+      {/* Connection guide hint */}
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <div>
+            <p className="text-xs text-cn-text2">
+              <strong className="text-amber-400">When connecting:</strong> Google will show a &quot;This app isn&apos;t verified&quot; warning.
+              Click <strong className="text-cn-text">Advanced</strong> → <strong className="text-cn-text">Go to [app name] (unsafe)</strong> → <strong className="text-cn-text">Continue</strong>.
+              This is normal for personal projects in testing mode.
+            </p>
+            <p className="mt-1 text-[10px] text-cn-text3">
+              New accounts must be added as test users in your{" "}
+              <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:underline">Google Cloud Console</a>{" "}
+              first.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Storage pool overview */}
@@ -120,8 +142,17 @@ export default function AccountsPage() {
                         {account.email}
                       </p>
                       <div className="mt-1 flex items-center gap-1.5">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-xs text-emerald-400">Connected</span>
+                        {staleAccounts.has(account.email) ? (
+                          <>
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                            <span className="text-xs text-amber-400">Needs Re-auth</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            <span className="text-xs text-emerald-400">Connected</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -143,12 +174,39 @@ export default function AccountsPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleDisconnect(account.email)}
-                    className="w-full rounded-lg border border-cn-border py-2 text-xs text-cn-text2 transition hover:border-red-500/40 hover:text-red-400"
-                  >
-                    Disconnect
-                  </button>
+                  <div className="space-y-2">
+                    {staleAccounts.has(account.email) && (
+                      <button
+                        onClick={() => reAuthAccount(account.email)}
+                        className="w-full rounded-lg border border-amber-500/40 py-2 text-xs font-medium text-amber-400 transition hover:bg-amber-500/10"
+                      >
+                        Re-authenticate
+                      </button>
+                    )}
+                    {confirmDisconnect === account.email ? (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => { handleDisconnect(account.email); setConfirmDisconnect(null); }}
+                          className="flex-1 rounded-lg bg-red-500 py-2 text-xs font-medium text-white transition hover:bg-red-400"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setConfirmDisconnect(null)}
+                          className="rounded-lg border border-cn-border px-3 py-2 text-xs text-cn-text2 transition hover:bg-cn-hover"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDisconnect(account.email)}
+                        className="w-full rounded-lg border border-cn-border py-2 text-xs text-cn-text2 transition hover:border-red-500/40 hover:text-red-400"
+                      >
+                        Disconnect
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -123,11 +123,12 @@ function DriveIcon({ color, delay = "0s" }: { color: string; delay?: string }) {
 
 export default function LandingPage() {
   const { theme, toggle } = useTheme();
-  const { isAuthenticated, isLoading, signOut } = useAuth();
+  const { isAuthenticated, isLoading, hasSetup, accounts, signOut } = useAuth();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const ctaHref = isAuthenticated ? "/dashboard" : "/setup";
-  const ctaLabel = isAuthenticated ? "Go to Dashboard" : "Get Started";
+  const ctaHref = hasSetup ? "/dashboard" : "/setup";
+  const ctaLabel = hasSetup ? "Go to Dashboard" : "Get Started";
+  const totalStorage = accounts.reduce((sum, a) => sum + a.storageQuota.limit, 0);
 
   return (
     <div className="min-h-screen bg-cn-bg text-cn-text">
@@ -183,6 +184,39 @@ export default function LandingPage() {
         </div>
       </nav>
 
+      {/* ── Welcome back banner (returning users) ──────────── */}
+      {hasSetup && !isLoading && (
+        <section className="border-b border-cn-border bg-cn-s1">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-8 text-center sm:flex-row sm:justify-between sm:text-left sm:px-6">
+            <div>
+              <h2 className="text-lg font-semibold text-cn-text">
+                Welcome back
+              </h2>
+              <p className="mt-1 text-sm text-cn-text2">
+                {accounts.length} connected account{accounts.length !== 1 ? "s" : ""}
+                {totalStorage > 0 && (
+                  <> · <strong className="text-cn-text">{(totalStorage / 1024 ** 3).toFixed(0)} GB</strong> total storage</>
+                )}
+              </p>
+              {!isAuthenticated && (
+                <p className="mt-1 text-xs text-cn-text3">
+                  Your session has expired. It will refresh when you open the dashboard.
+                </p>
+              )}
+            </div>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+              Go to Dashboard
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* ── Hero ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="grid-bg absolute inset-0" />
@@ -215,7 +249,7 @@ export default function LandingPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
-              {isAuthenticated ? "Go to Dashboard" : "Open Dashboard"}
+              {ctaLabel}
             </Link>
             <a
               href="https://github.com/Encryptioner/CloudNest"
@@ -455,15 +489,15 @@ export default function LandingPage() {
                 href={ctaHref}
                 className="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow shadow-orange-500/25 transition hover:bg-orange-400"
               >
-                {isAuthenticated ? "Go to Dashboard" : "Start Using CloudNest"}
+                {ctaLabel}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Reset Section (only when authenticated) ─── */}
-      {isAuthenticated && (
+      {/* ── Reset Section (returning or authenticated users) ─── */}
+      {hasSetup && (
         <section className="border-t border-cn-border py-8">
           <div className="mx-auto max-w-6xl px-6 flex items-center justify-between">
             <div>

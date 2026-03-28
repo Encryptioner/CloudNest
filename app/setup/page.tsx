@@ -23,7 +23,7 @@ type StepName = (typeof STEPS)[number];
 export default function SetupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { clientId, accounts, setClientId, connectAccount, isAuthenticated } = useAuth();
+  const { clientId, accounts, setClientId, connectAccount, isAuthenticated, hasSetup } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [inputClientId, setInputClientId] = useState("");
@@ -31,12 +31,12 @@ export default function SetupPage() {
   const [connectError, setConnectError] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // If already authenticated, redirect to dashboard
+  // Redirect to dashboard if already set up (even with expired tokens — AuthGuard will allow access)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated || hasSetup) {
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, hasSetup, router]);
 
   // Handle ?step=connect param
   useEffect(() => {
@@ -200,8 +200,12 @@ export default function SetupPage() {
               </ol>
               <div className="mt-4 space-y-2">
                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-cn-text3">
-                  <strong className="text-orange-400">Note:</strong> Apps in testing mode are limited to 100 test users.
-                  Each Google account you want to connect must be added as a test user.
+                  <strong className="text-orange-400">Important:</strong> Add <strong className="text-cn-text">every Google account</strong> you want to connect as a test user.
+                  Apps in testing mode are limited to 100 test users. Only test users can sign in.
+                </div>
+                <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2 text-xs text-cn-text3">
+                  <strong className="text-blue-400">Multiple accounts:</strong> Want to pool storage from several Gmail accounts?
+                  Add all of them as test users here. You&apos;ll connect them one-by-one in the next steps.
                 </div>
                 <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs text-cn-text3">
                   <strong className="text-emerald-400">Scopes:</strong> CloudNest only requests the{" "}
@@ -302,15 +306,52 @@ export default function SetupPage() {
                 CloudNest runs entirely in your browser. Your tokens and files are never sent to any server.
                 You can disconnect accounts or revoke access at any time from Settings.
               </div>
+
+              {/* Unverified app warning guide */}
+              <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                <p className="mb-2 text-xs font-semibold text-amber-400">You&apos;ll see a &quot;Google hasn&apos;t verified this app&quot; warning</p>
+                <p className="mb-3 text-xs text-cn-text2 leading-relaxed">
+                  This is expected! Since you created this Google Cloud project yourself, it&apos;s in &quot;Testing&quot; mode.
+                  Google shows this warning for all unverified apps — but this is <strong className="text-cn-text">your own project</strong>, so it&apos;s completely safe.
+                </p>
+                <div className="space-y-2 rounded-lg border border-cn-border bg-cn-bg p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-cn-text3">When you see the warning, follow these steps:</p>
+                  <div className="flex items-start gap-2 text-xs text-cn-text2">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-[9px] font-bold text-amber-400">1</span>
+                    <span>Click <strong className="text-cn-text">&quot;Advanced&quot;</strong> (small link at the bottom left)</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs text-cn-text2">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-[9px] font-bold text-amber-400">2</span>
+                    <span>Click <strong className="text-cn-text">&quot;Go to [your app name] (unsafe)&quot;</strong></span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs text-cn-text2">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-[9px] font-bold text-amber-400">3</span>
+                    <span>Click <strong className="text-cn-text">&quot;Continue&quot;</strong> to grant Drive access</span>
+                  </div>
+                </div>
+                <p className="mt-2 text-[10px] text-cn-text3">
+                  Do <strong className="text-cn-text">not</strong> click &quot;Back to safety&quot; — that cancels the connection.
+                  The &quot;unsafe&quot; label is Google&apos;s default wording for all unverified apps, not a security risk.
+                </p>
+              </div>
               {accounts.length > 0 && (
                 <div className="mb-4 space-y-2">
                   <p className="text-xs font-medium text-cn-text3">Connected accounts:</p>
                   {accounts.map((a) => (
-                    <div key={a.email} className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
-                      <span className="text-green-400 text-xs">✓</span>
-                      <span className="text-sm text-cn-text">{a.email}</span>
+                    <div key={a.email} className="flex items-center justify-between rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400 text-xs">✓</span>
+                        <span className="text-sm text-cn-text">{a.email}</span>
+                      </div>
+                      <span className="text-xs text-cn-text3">
+                        {(a.storageQuota.limit / (1024 ** 3)).toFixed(0)} GB
+                      </span>
                     </div>
                   ))}
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2 text-xs text-cn-text3">
+                    <strong className="text-blue-400">Add more accounts</strong> to increase your storage pool.
+                    Each free Google account adds 15 GB. Click &quot;Add Another Account&quot; below and repeat the same sign-in process.
+                  </div>
                 </div>
               )}
               {connectError && (

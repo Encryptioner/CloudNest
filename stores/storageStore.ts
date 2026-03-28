@@ -8,6 +8,7 @@ interface StorageState {
   totalLimit: number;
   totalFree: number;
   isLoading: boolean;
+  error: string | null;
   refreshStorage: (accounts: ConnectedAccount[]) => Promise<void>;
   clearStorage: () => void;
 }
@@ -55,10 +56,11 @@ export const useStorageStore = create<StorageState>((set) => ({
   totalLimit: 0,
   totalFree: 0,
   isLoading: true,
+  error: null,
 
   refreshStorage: async (accounts: ConnectedAccount[]) => {
     if (accounts.length === 0) {
-      set({ quotas: [], totalUsed: 0, totalLimit: 0, totalFree: 0, isLoading: false });
+      set({ quotas: [], totalUsed: 0, totalLimit: 0, totalFree: 0, isLoading: false, error: null });
       return;
     }
 
@@ -71,16 +73,16 @@ export const useStorageStore = create<StorageState>((set) => ({
     // Immediately show stored quota data so the UI is never empty
     const fallback = buildFallbackQuotas(accounts);
     const fallbackTotals = computeTotals(accounts, fallback);
-    set({ quotas: fallback, ...fallbackTotals, isLoading: true });
+    set({ quotas: fallback, ...fallbackTotals, isLoading: true, error: null });
 
     const doRefresh = async () => {
       try {
         const results = await drive.getAllQuotas(accounts);
         const totals = computeTotals(accounts, results);
-        set({ quotas: results, ...totals, isLoading: false });
-      } catch {
+        set({ quotas: results, ...totals, isLoading: false, error: null });
+      } catch (err) {
         // Fallback already set above — just stop loading
-        set({ isLoading: false });
+        set({ isLoading: false, error: err instanceof Error ? err.message : "Failed to refresh storage" });
       } finally {
         refreshPromise = null;
       }
@@ -91,6 +93,6 @@ export const useStorageStore = create<StorageState>((set) => ({
   },
 
   clearStorage: () => {
-    set({ quotas: [], totalUsed: 0, totalLimit: 0, totalFree: 0, isLoading: false });
+    set({ quotas: [], totalUsed: 0, totalLimit: 0, totalFree: 0, isLoading: false, error: null });
   },
 }));

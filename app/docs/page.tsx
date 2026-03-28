@@ -227,12 +227,19 @@ export default function DocsPage() {
                     <>Choose <strong className="text-cn-text">External</strong> as the user type and click <strong className="text-cn-text">Create</strong>.</>,
                     <>Fill in the required fields: app name, user support email, and developer contact email.</>,
                     <>On the <strong className="text-cn-text">Scopes</strong> step, click <strong className="text-cn-text">Add or Remove Scopes</strong> and add the <Code>https://www.googleapis.com/auth/drive</Code> scope.</>,
-                    <>On the <strong className="text-cn-text">Test users</strong> step, add every Google account email you want to use with CloudNest. Click <strong className="text-cn-text">Add Users</strong> and enter one email per line.</>,
+                    <>
+                      On the <strong className="text-cn-text">Test users</strong> step, add <strong className="text-cn-text">every Google account email</strong> you want to connect to CloudNest. Click <strong className="text-cn-text">Add Users</strong> and enter one email per line.
+                      For example, if you have <Code>alice@gmail.com</Code>, <Code>bob@gmail.com</Code>, and <Code>work@company.com</Code>, add all three.
+                    </>,
                     <>Click <strong className="text-cn-text">Save and Continue</strong> through the remaining steps.</>,
                   ]} />
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-3">
                     <Note type="warn">
                       While the app is in &quot;Testing&quot; status, only the test users you add can sign in. You can add up to <strong className="text-cn-text">100 test users</strong>. To remove this limit, you would need to submit the app for Google verification.
+                    </Note>
+                    <Note type="tip">
+                      Planning to pool storage from multiple Gmail accounts? Add all of them as test users now. You can always come back and add more later at{" "}
+                      <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline underline-offset-2">console.cloud.google.com</a>.
                     </Note>
                   </div>
                 </div>
@@ -278,14 +285,91 @@ export default function DocsPage() {
                   </div>
                   <NumberedList items={[
                     <>Click <strong className="text-cn-text">Connect Google Account</strong> to start the OAuth flow.</>,
-                    <>Google will show the account chooser — select the account you want to connect.</>,
-                    <>Approve the Drive permissions on the consent screen. You may see a &quot;This app isn&apos;t verified&quot; warning — click <strong className="text-cn-text">Advanced &rarr; Go to CloudNest</strong> to proceed.</>,
+                    <>Google will show the <strong className="text-cn-text">account chooser</strong> — select the account you want to connect. Make sure this account is added as a <strong className="text-cn-text">test user</strong> in your OAuth consent screen (Step C).</>,
+                    <>
+                      You will see a <strong className="text-cn-text">&quot;Google hasn&apos;t verified this app&quot;</strong> warning screen. This is expected — see the detailed walkthrough below.
+                    </>,
+                    <>On the <strong className="text-cn-text">permissions screen</strong>, Google will ask you to grant access to &quot;See, edit, create, and delete all of your Google Drive files.&quot; Click <strong className="text-cn-text">Continue</strong> to approve.</>,
                     <>You&apos;ll be redirected back to CloudNest with full access to your Drive files.</>,
                   ]} />
-                  <div className="mt-4">
-                    <Note type="info">
-                      You can connect multiple Google accounts. Each account adds its full storage quota (15 GB for free accounts) to your combined pool.
-                    </Note>
+
+                  {/* Unverified app warning walkthrough */}
+                  <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+                    <h4 className="mb-1 text-sm font-semibold text-amber-400">&quot;Google hasn&apos;t verified this app&quot; — What to do</h4>
+                    <p className="mb-4 text-xs leading-relaxed text-cn-text2">
+                      Since you created this Google Cloud project yourself, it&apos;s in <strong className="text-cn-text">&quot;Testing&quot; mode</strong>.
+                      Google shows this warning for all unverified apps — it does not mean the app is unsafe.
+                      This is <strong className="text-cn-text">your own project</strong>, running in <strong className="text-cn-text">your own browser</strong>, with credentials <strong className="text-cn-text">you created</strong>. It&apos;s completely safe to proceed.
+                    </p>
+
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-cn-border bg-cn-bg p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/10 text-[10px] font-bold text-amber-400">1</span>
+                          <p className="text-xs font-semibold text-cn-text">Warning Screen</p>
+                        </div>
+                        <p className="pl-7 text-xs text-cn-text2">
+                          You&apos;ll see &quot;Google hasn&apos;t verified this app&quot; with two options.
+                          <strong className="text-cn-text"> Do NOT click &quot;Back to safety&quot;</strong> — that cancels the connection.
+                          Instead, click the small <strong className="text-cn-text">&quot;Advanced&quot;</strong> link at the bottom left of the dialog.
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-cn-border bg-cn-bg p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/10 text-[10px] font-bold text-amber-400">2</span>
+                          <p className="text-xs font-semibold text-cn-text">Advanced Options</p>
+                        </div>
+                        <p className="pl-7 text-xs text-cn-text2">
+                          After clicking &quot;Advanced&quot;, additional text appears at the bottom. Click <strong className="text-cn-text">&quot;Go to [your app name] (unsafe)&quot;</strong>.
+                          The &quot;unsafe&quot; label is Google&apos;s default wording for all unverified apps — it&apos;s not a reflection of your app&apos;s safety.
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-cn-border bg-cn-bg p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/10 text-[10px] font-bold text-amber-400">3</span>
+                          <p className="text-xs font-semibold text-cn-text">Grant Permissions</p>
+                        </div>
+                        <p className="pl-7 text-xs text-cn-text2">
+                          Google will show the permissions CloudNest needs: access to your Google Drive files.
+                          Click <strong className="text-cn-text">&quot;Continue&quot;</strong> to approve. This grants CloudNest (running in your browser) permission to manage your Drive files.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <Note type="tip">
+                        This warning only appears because your Google Cloud project hasn&apos;t been submitted for Google verification — a process designed for apps serving thousands of users.
+                        For personal use, &quot;Testing&quot; mode is perfectly fine. You&apos;ll see this warning each time you connect a new account or re-authenticate.
+                      </Note>
+                    </div>
+                  </div>
+
+                  {/* Multiple accounts guide */}
+                  <div className="mt-5 rounded-xl border border-blue-500/20 bg-blue-500/5 p-5">
+                    <h4 className="mb-1 text-sm font-semibold text-blue-400">Adding Multiple Accounts</h4>
+                    <p className="mb-3 text-xs leading-relaxed text-cn-text2">
+                      CloudNest&apos;s core feature is pooling storage from multiple Google accounts. Here&apos;s how to add more:
+                    </p>
+                    <NumberedList items={[
+                      <>
+                        <strong className="text-cn-text">Add as test user first:</strong> Before connecting a new account, go to your{" "}
+                        <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline underline-offset-2">OAuth consent screen</a>{" "}
+                        &rarr; <strong className="text-cn-text">Test users</strong> &rarr; <strong className="text-cn-text">Add Users</strong> and add the email address.
+                      </>,
+                      <>
+                        <strong className="text-cn-text">Connect from CloudNest:</strong> In the setup wizard, click <strong className="text-cn-text">&quot;Add Another Account&quot;</strong>. Or, after setup, go to{" "}
+                        <strong className="text-cn-text">Dashboard &rarr; Accounts</strong> or <strong className="text-cn-text">Dashboard &rarr; Settings</strong> and click <strong className="text-cn-text">&quot;Connect Account&quot;</strong>.
+                      </>,
+                      <>
+                        <strong className="text-cn-text">Same flow each time:</strong> You&apos;ll go through the same Google sign-in process (account chooser &rarr; unverified warning &rarr; Advanced &rarr; Continue &rarr; grant permissions) for each account.
+                      </>,
+                      <>
+                        <strong className="text-cn-text">Storage pools automatically:</strong> Each free Google account adds 15 GB. Connect 3 accounts and you get 45 GB of unified storage.
+                        Google Workspace accounts may contribute more depending on your plan.
+                      </>,
+                    ]} />
                   </div>
                 </div>
               </div>
@@ -426,7 +510,11 @@ export default function DocsPage() {
                   },
                   {
                     q: "How many accounts can I connect?",
-                    a: "There is no hard limit in CloudNest. However, while your Google Cloud project is in \"Testing\" mode, you can add up to 100 test users on the OAuth consent screen. Each connected account adds its full 15 GB free quota to the pool.",
+                    a: "There is no hard limit in CloudNest. However, while your Google Cloud project is in \"Testing\" mode, you can add up to 100 test users on the OAuth consent screen. Each connected account adds its full 15 GB free quota to the pool. To add a new account: first add its email as a test user in the Google Cloud Console, then click \"Connect Account\" in CloudNest's Accounts or Settings page.",
+                  },
+                  {
+                    q: "Why does Google say \"This app isn't verified\"?",
+                    a: "This is normal and expected. Your Google Cloud project is in \"Testing\" mode, which is Google's default for new projects. Google only \"verifies\" apps that serve thousands of users. Since this is your own personal project running in your own browser, it's completely safe. Click \"Advanced\" → \"Go to [app name] (unsafe)\" → \"Continue\" to proceed. You'll see this each time you connect a new account.",
                   },
                   {
                     q: "Why does my session expire after about an hour?",
@@ -472,7 +560,7 @@ export default function DocsPage() {
                   },
                   {
                     q: "\"This app isn't verified\" warning",
-                    a: "This is normal for apps in Testing mode. Click \"Advanced\" and then \"Go to [app name] (unsafe)\" to proceed. Only test users added to the OAuth consent screen can sign in.",
+                    a: "This is normal and expected for apps in Testing mode. Do NOT click \"Back to safety\" — that cancels the connection. Instead: (1) Click \"Advanced\" at the bottom left, (2) Click \"Go to [your app name] (unsafe)\", (3) Click \"Continue\" to grant permissions. The \"unsafe\" label is Google's default wording for all unverified apps. Since this is your own Google Cloud project, it's completely safe. Only accounts added as test users in the OAuth consent screen can sign in.",
                   },
                   {
                     q: "\"Access blocked: This app's request is invalid\" error",
@@ -485,6 +573,10 @@ export default function DocsPage() {
                   {
                     q: "\"Storage quota exceeded\" on upload",
                     a: "The target Google Drive account is full. Connect another Google account with available storage, or free up space by deleting files and emptying the trash in the original account.",
+                  },
+                  {
+                    q: "Can't connect a second Google account",
+                    a: "Make sure the email address is added as a test user in your Google Cloud Console (APIs & Services → OAuth consent screen → Test users → Add Users). Only emails listed as test users can sign in while the project is in Testing mode. After adding the email, try connecting again from CloudNest.",
                   },
                   {
                     q: "Files not showing after connecting account",
