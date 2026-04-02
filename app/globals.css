@@ -47,6 +47,26 @@ body {
   color: var(--cn-text);
 }
 
+/* ── Theme-aware support link ────────────────────────────── */
+.cn-coffee-link {
+  color: #FCD34D; /* amber-300 — visible on dark bg */
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+}
+.cn-coffee-link:hover { color: #FDE68A; }
+
+:root.light .cn-coffee-link {
+  color: #92400E;
+  background: rgba(245, 158, 11, 0.12);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+:root.light .cn-coffee-link:hover {
+  color: #78350F;
+  background: rgba(245, 158, 11, 0.22);
+}
+
 /* ── Scrollbar ───────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
